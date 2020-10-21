@@ -1,0 +1,221 @@
+I"�!<h2 id="compiling--linking"><a name="compilers"></a>Compiling &amp; Linking</h2>
+
+<p>Expanse provides the Intel, Portland Group (PGI), and GNU compilers along with multiple MPI implementations (MVAPICH2, MPICH2, OpenMPI). Most applications will achieve the best performance on Expanse using the Intel compilers and MVAPICH2 and the majority of libraries installed on Expanse have been built using this combination.</p>
+
+<p>Other compilers and versions can be installed by Expanse staff on request. For more information, see the user guide:
+http://www.sdsc.edu/support/user_guides/expanse.html#compiling</p>
+
+<h3 id="supported-compiler-types"><a name="compilers-supported"></a>Supported Compiler Types</h3>
+
+<p>Expanse compute nodes support several parallel programming models:</p>
+<ul>
+  <li><strong>MPI</strong>: Default: Intel</li>
+  <li>Default Intel Compiler: intel/2018.1.163; Other versions available.</li>
+  <li>Other options: openmpi_ib/1.8.4 (and 1.10.2), Intel MPI, mvapich2_ib/2.1</li>
+  <li>mvapich2_gdr: GPU direct enabled version</li>
+  <li><strong>OpenMP</strong>: All compilers (GNU, Intel, PGI) have OpenMP flags.</li>
+  <li><strong>GPU nodes</strong>: support CUDA, OpenACC.</li>
+  <li><strong>Hybrid modes</strong> are possible.</li>
+</ul>
+
+<p>In this tutorial, we include several hands-on examples that cover many of the cases in the table:</p>
+
+<ul>
+  <li>MPI</li>
+  <li>OpenMP</li>
+  <li>HYBRID</li>
+  <li>GPU</li>
+  <li>Local scratch</li>
+</ul>
+
+<p>Default/Suggested Compilers to used based on programming model and languages:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Serial</th>
+      <th>MPI</th>
+      <th>OpenMP</th>
+      <th>MPI+OpenMP</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fortran</td>
+      <td>ifort</td>
+      <td>mpif90</td>
+      <td>ifort -openmp</td>
+      <td>mpif90 -openmp</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>icc</td>
+      <td>mpicc</td>
+      <td>icc -openmp</td>
+      <td>mpicc -openmp</td>
+    </tr>
+    <tr>
+      <td>C++</td>
+      <td>icpc</td>
+      <td>mpicxx</td>
+      <td>icpc -openmp</td>
+      <td>mpicxx -openmp</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<h3 id="using-the-intel-compilers"><a name="compilers-intel"></a>Using the Intel Compilers:</h3>
+
+<p>The Intel compilers and the MVAPICH2 MPI implementation will be loaded by default. If you have modified your environment, you can reload by executing the following commands at the Linux prompt or placing in your startup file (~/.cshrc or ~/.bashrc) or into a module load script (see above).</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>module purge
+module load intel mvapich2_ib
+</code></pre></div></div>
+<p>For AVX2 support, compile with the -xHOST option. Note that -xHOST alone does not enable aggressive optimization, so compilation with -O3 is also suggested. The -fast flag invokes -xHOST, but should be avoided since it also turns on interprocedural optimization (-ipo), which may cause problems in some instances.</p>
+
+<p>Intel MKL libraries are available as part of the “intel” modules on Expanse. Once this module is loaded, the environment variable MKL_ROOT points to the location of the mkl libraries. The MKL link advisor can be used to ascertain the link line (change the MKL_ROOT aspect appropriately).</p>
+
+<p>In the example below, we are working with the HPC examples that can be found in</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[user@expanse-14-01:~/expanse-examples/expanse101/MKL] pwd
+/home/user/expanse-examples/expanse101/MKL
+[user@expanse-14-01:~/expanse-examples/expanse101/MKL] ls -al
+total 25991
+drwxr-xr-x  2 user use300        9 Nov 25 17:20 .
+drwxr-xr-x 16 user use300       16 Aug  5 19:02 ..
+-rw-r--r--  1 user use300      325 Aug  5 19:02 compile.txt
+-rw-r--r--  1 user use300     6380 Aug  5 19:02 pdpttr.c
+-rwxr-xr-x  1 user use300 44825440 Nov 25 16:55 pdpttr.exe
+-rw-r--r--  1 user use300      188 Nov 25 16:57 scalapack.20294236.expanse-07-27.out
+-rw-r--r--  1 user use300      376 Aug  5 19:02 scalapack.sb
+</code></pre></div></div>
+
+<p>The file <code class="language-plaintext highlighter-rouge">compile.txt</code> contains the full command to compile the <code class="language-plaintext highlighter-rouge">pdpttr.c</code> program statically linking 64 bit scalapack libraries on Expanse:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[user@expanse-14-01:~/expanse-examples/expanse101/MKL] cat compile.txt
+mpicc -o pdpttr.exe pdpttr.c /opt/intel/2018.1.163/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64/libmkl_scalapack_lp64.a -Wl,--start-group /opt/intel/2018.1.163/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64/libmkl_intel_lp64.a /opt/intel/2018.1.163/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64/libmkl_sequential.a /opt/intel/2018.1.163/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64/libmkl_core.a /opt/intel/2018.1.163/compilers_and_libraries_2018.1.163/linux/mkl/lib/intel64/libmkl_blacs_intelmpi_lp64.a -Wl,--end-group -lpthread -lm -ldl
+</code></pre></div></div>
+
+<p>Run the command:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[user@expanse-14-01:~/expanse-examples/expanse101/MKL] mpicc -o pdpttr.exe pdpttr.c  -I$MKL_ROOT/include ${MKL_ROOT}/lib/intel64/libmkl_scalapack_lp64.a -Wl,--start-group ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.a ${MKL_ROOT}/lib/intel64/libmkl_core.a ${MKL_ROOT}/lib/intel64/libmkl_sequential.a -Wl,--end-group ${MKL_ROOT}/lib/intel64/libmkl_blacs_intelmpi_lp64.a -lpthread -lm
+</code></pre></div></div>
+<p>For more information on the Intel compilers run: [ifort | icc | icpc] -help</p>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<h3 id="using-the-pgi-compilers"><a name="compilers-pgi"></a>Using the PGI Compilers</h3>
+<p>The PGI compilers can be loaded by executing the following commands at the Linux prompt or placing in your startup file (~/.cshrc or ~/.bashrc)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>module purge
+module load pgi mvapich2_ib
+</code></pre></div></div>
+
+<p>For AVX support, compile with -fast</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>For more information on the PGI compilers: man [pgf90</td>
+      <td>pgcc</td>
+      <td>pgCC]</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Serial</th>
+      <th>MPI</th>
+      <th>OpenMP</th>
+      <th>MPI+OpenMP</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pgf90</td>
+      <td>mpif90</td>
+      <td>pgf90 -mp</td>
+      <td>mpif90 -mp</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>pgcc</td>
+      <td>mpicc</td>
+      <td>pgcc -mp</td>
+      <td>mpicc -mp</td>
+    </tr>
+    <tr>
+      <td>C++</td>
+      <td>pgCC</td>
+      <td>mpicxx</td>
+      <td>pgCC -mp</td>
+      <td>mpicxx -mp</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<h3 id="using-the-gnu-compilers"><a name="compilers-gnu"></a>Using the GNU Compilers</h3>
+<p>The GNU compilers can be loaded by executing the following commands at the Linux prompt or placing in your startup files (~/.cshrc or ~/.bashrc)</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>module purge
+module load gnu openmpi_ib
+</code></pre></div></div>
+
+<p>For AVX support, compile with -mavx. Note that AVX support is only available in version 4.7 or later, so it is necessary to explicitly load the gnu/4.9.2 module until such time that it becomes the default.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>For more information on the GNU compilers: man [gfortran</td>
+      <td>gcc</td>
+      <td>g++]</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Serial</th>
+      <th>MPI</th>
+      <th>OpenMP</th>
+      <th>MPI+OpenMP</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fortran</td>
+      <td>gfortran</td>
+      <td>mpif90</td>
+      <td>gfortran -fopenmp</td>
+      <td>mpif90 -fopenmp</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>gcc</td>
+      <td>mpicc</td>
+      <td>gcc -fopenmp</td>
+      <td>mpicc -fopenmp</td>
+    </tr>
+    <tr>
+      <td>C++</td>
+      <td>g++</td>
+      <td>mpicxx</td>
+      <td>g++ -fopenmp</td>
+      <td>mpicxx -fopenmp</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+:ET

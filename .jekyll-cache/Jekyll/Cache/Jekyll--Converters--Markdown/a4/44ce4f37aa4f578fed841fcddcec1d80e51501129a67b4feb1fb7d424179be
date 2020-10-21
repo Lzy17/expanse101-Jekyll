@@ -1,0 +1,51 @@
+I"�<h1 id="expanse-overview"><a name="overview"></a>Expanse Overview:</h1>
+
+<h3 id="hpc-for-the-long-tail-of-science">HPC for the “long tail of science:”</h3>
+<ul>
+  <li>Designed and operated on the principle that the majority of computational research is performed at modest scale: large number jobs that run for less than 48 hours, but can be computationally intensvie and generate large amounts of data.</li>
+  <li>An NSF-funded system available through the eXtreme Science and Engineering Discovery Environment (XSEDE) program.</li>
+  <li>Also supports science gateways.</li>
+</ul>
+
+<p><img src="images/expanse-rack.png" alt="Expanse Rack View" width="500px" /></p>
+<ul>
+  <li>2.76 Pflop/s peak</li>
+  <li>48,784 CPU cores</li>
+  <li>288 NVIDIA GPUs</li>
+  <li>247 TB total memory</li>
+  <li>634 TB total flash memory</li>
+</ul>
+
+<p><img src="images/expanse-characteristics.png" alt="Expanse System Characteristics" width="500px" /></p>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<p><a name="network-arch"></a><img src="images/expanse-network-arch.png" alt="Expanse Network Architecture" width="500px" /></p>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<p><a name="file-systems"></a><img src="images/expanse-file-systems.png" alt="Expanse File Systems" width="500px" /></p>
+<ul>
+  <li>Lustre filesystems – Good for scalable large block I/O</li>
+  <li>Accessible from all compute and GPU nodes.</li>
+  <li>/oasis/scratch/expanse - 2.5PB, peak performance: 100GB/s. Good location for storing large scale scratch data during a job.</li>
+  <li>/oasis/projects/nsf - 2.5PB, peak performance: 100 GB/s. Long term storage.</li>
+  <li>
+    <p><em>Not good for lots of small files or small block I/O.</em></p>
+  </li>
+  <li>SSD filesystems</li>
+  <li>/scratch local to each native compute node – 210GB on regular compute nodes, 285GB on GPU, large memory nodes, 1.4TB on selected compute nodes.</li>
+  <li>
+    <p>SSD location is good for writing small files and temporary scratch files. Purged at the end of a job.</p>
+  </li>
+  <li>Home directories (/home/$USER)</li>
+  <li>Source trees, binaries, and small input files.</li>
+  <li><em>Not good for large scale I/O.</em></li>
+</ul>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+:ET

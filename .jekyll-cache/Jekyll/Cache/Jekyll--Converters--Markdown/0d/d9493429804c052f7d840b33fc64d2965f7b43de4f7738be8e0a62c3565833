@@ -1,0 +1,140 @@
+I"	%<h2 id="running-jobs-on-expanse-">Running Jobs on Expanse <a name="running-jobs"></a></h2>
+<p>Expanse manages computational work via the Simple Linux Utility for Resource Management (SLURM) batch environment. Expanse places limits on the number of jobs queued and running on a per group (allocation) and partition basis. Submitting a large number of jobs (especially very short ones) can impact the overall  scheduler response for all users. If you are anticipating submitting a lot of jobs,  contact the SDSC consulting staff before you submit them. We can work to check if there are bundling options that make your workflow more efficient and reduce the impact on the scheduler</p>
+
+<p>For more details, see the section on Running job in the Expanse User Guide:
+http://www.sdsc.edu/support/user_guides/expanse.html#running</p>
+
+<h3 id="the-simple--linux-utility-for-resource-management--slurm-">The Simple  Linux Utility for Resource Management  (SLURM) <a name="running-jobs-slurm"></a></h3>
+
+<p><img src="images/slurm.png" alt="Simple Linux Utility for Resource Management" width="500px" /></p>
+
+<ul>
+  <li>“Glue” for parallel computer to schedule and execute jobs</li>
+  <li>Role: Allocate resources within a cluster</li>
+  <li>Nodes (unique IP address)</li>
+  <li>Interconnect/switches</li>
+  <li>Generic resources (e.g. GPUs)</li>
+  <li>
+    <p>Launch and otherwise manage jobs</p>
+  </li>
+  <li>Functionality:</li>
+  <li>Prioritize queue(s) of jobs;</li>
+  <li>decide when and where to start jobs;</li>
+  <li>terminate job when done;</li>
+  <li>Appropriate resources;</li>
+  <li>
+    <p>Manage accounts for jobs</p>
+  </li>
+  <li>All jobs must be run via the Slurm scheduling infrastructure. There are two types of jobs:</li>
+  <li><a href="#running-jobs-slurm-interactive">Interactive Jobs</a></li>
+  <li><a href="#running-jobs-slurm-batch-submit">Batch Jobs</a></li>
+</ul>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<h3 id="interactive-jobs-">Interactive Jobs: <a name="running-jobs-slurm-interactive"></a></h3>
+<p>Interactive HPC systems allow <em>real-time</em> user inputs in order to facilitate code development, real-time data exploration, and visualizations. An interactive job (also referred as interactive session) will provide you with a shell on a compute node in which you can launch your jobs. On Expanse, use the <code class="language-plaintext highlighter-rouge">srun</code> command:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>srun --pty --nodes=1 --ntasks-per-node=24 -p debug -t 00:30:00 --wait 0 /bin/bash
+</code></pre></div></div>
+
+<p>For more information, see the interactive computing tutorial <a href="https://github.com/sdsc/sdsc-summer-institute-2020/blob/master/0_preparation/interactive_computing/README.md">here</a>.</p>
+
+<h3 id="batch-jobs-using-slurm-">Batch Jobs using SLURM: <a name="running-jobs-slurm-batch"></a></h3>
+<p>When you run in the batch mode, you submit jobs to be run on the compute nodes using the <code class="language-plaintext highlighter-rouge">sbatch</code> command (described below).</p>
+
+<p>Batch scripts are submitted from the login nodes. You can set environment variables in the shell or in the batch script, including:</p>
+<ul>
+  <li>Partition (also called the qeueing system)</li>
+  <li>Time limit for a job (maximum of 48 hours; longer on request)</li>
+  <li>Number of nodes, tasks per node</li>
+  <li>Memory requirements (if any)</li>
+  <li>Job name, output file location</li>
+  <li>Email info, configuration</li>
+</ul>
+
+<p>Below is an example of a basic batch script, which shows key features including
+naming the job/output file, selecting the SLURM queue partition, defining the
+number of nodes and ocres, and the length of time that the job will need:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[mthomas@expanse-ln3 IBRUN]$ cat hellompi-slurm.sb
+#!/bin/bash
+#SBATCH --job-name="hellompi"
+#SBATCH --output="hellompi.%j.%N.out"
+#SBATCH --partition=compute
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=24
+#SBATCH --export=ALL
+#SBATCH -t 00:30:00
+
+#Define user environment
+source /etc/profile.d/modules.sh
+module purge
+module load intel
+module load mvapich2_ib
+
+#This job runs with 2 nodes, 24 cores per node for a total of 48 cores.
+#ibrun in verbose mode will give binding detail
+
+ibrun -v ../hello_mpi
+</code></pre></div></div>
+
+<p>Note that we have included configuring the user environment by purging and
+then loading the necessary modules. While not required, it is a good habit
+to develop when building batch scripts.</p>
+
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<h3 id="slurm-partitions-">Slurm Partitions <a name="slurm-partitions"></a></h3>
+<p>Expanse places limits on the number of jobs queued and running on a per group (allocation) and partition basis. Please note that submitting a large number of jobs (especially very short ones) can impact the overall  scheduler response for all users.</p>
+
+<p><img src="images/expanse-queue-names.png" alt="Expanse Queue Names" width="500px" /></p>
+
+<p>Specified using -p option in batch script. For example:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#SBATCH -p gpu
+</code></pre></div></div>
+<p><a href="#top">Back to Top</a></p>
+<hr />
+
+<h3 id="slurm-commands-">Slurm Commands: <a name="slurm-commands"></a></h3>
+<p>Here are a few key Slurm commands. For more information, run the <code class="language-plaintext highlighter-rouge">man slurm</code> or see this page:</p>
+
+<ul>
+  <li>To Submit jobs using the <code class="language-plaintext highlighter-rouge">sbatch</code> command:</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ sbatch Localscratch-slurm.sb 
+Submitted batch job 8718049
+</code></pre></div></div>
+<ul>
+  <li>To check job status using the squeue command:
+<code class="language-plaintext highlighter-rouge">
+$ squeue -u $USER
+             JOBID PARTITION     NAME     USER      ST       TIME  NODES  NODELIST(REASON)
+                        8718049   compute       localscr mahidhar   PD       0:00       1               (Priority)
+                       </code>
+                        * Once the job is running, you will see the job status change:
+                        <code class="language-plaintext highlighter-rouge">
+                        $ squeue -u $USER
+                                     JOBID PARTITION     NAME     USER    ST       TIME  NODES  NODELIST(REASON)
+                                                8718064     debug        localscr mahidhar   R         0:02      1           expanse-14-01
+                                               </code>
+                                                * To cancel a job, use the <code class="language-plaintext highlighter-rouge">scancel</code> along with the <code class="language-plaintext highlighter-rouge">JOBID</code>:
+                                                *   $scancel <jobid>
+                                                
+                                                ### Command Line Jobs <a name="running-jobs-cmdline"></a>
+                                                The login nodes are meant for compilation, file editing, simple data analysis, and other tasks that use minimal compute resources. <em>Do not run parallel or large jobs on the login nodes - even for simple tests</em>. Even if you could run a simple test on the command line on the login node, full tests should not be run on the login node because the performance will be adversely impacted by all the other tasks and login activities of the other users who are logged onto the same node. For example, at the moment that this note was written,  a `gzip` process was consuming 98% of the CPU time:
+                                                ```
+                                                [mthomas@expanse-ln3 OPENMP]$ top
+                                                ...
+                                                PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                                      
+                                                19937 XXXXX     20   0  4304  680  300 R 98.2  0.0   0:19.45 gzip
+                                                ```
+                                                
+                                                Commands that you type into the terminal and run on the sytem are considered *jobs* and they consume resources.  <em>Computationally intensive jobs should be run only on the compute nodes and not the login nodes</em>.
+                                                
+                                                [Back to Top](#top)
+                                                &lt;hr&gt;</jobid></li>
+</ul>
+:ET
